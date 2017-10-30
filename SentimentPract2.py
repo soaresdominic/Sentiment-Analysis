@@ -274,58 +274,51 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
         Words = re.findall(r"[\w']+", sentence)
         score=0
 
+        
         Lword = Words
         curri = 0
-        for i in range(0, len(Lword)):
-            blob = []
-            if(Lword[i] in sentimentDictionary):
-                tmpScore = sentimentDictionary[Lword[i]]
-                if(curri != i):
+        for i in range(0, len(Lword)):  #for each word
+            strength = ""
+            blob = ""
+            if(Lword[i] in sentimentDictionary):  #if in the dictionary
+                tmpScore = sentimentDictionary[Lword[i]]  #get its score
+                if(tmpScore == .75 or tmpScore == -.75):
+                    strength = "weak"
+                else:
+                    strength = "strong"
+                if(curri != i): 
                     blob = str(Lword[curri:i+1])
                     #print(blob)
                     blob = TextBlob(blob)
                     polarity = blob.sentiment.polarity
-                    if((tmpScore < 0 and polarity < 0) or (tmpScore > 0 and polarity > 0)):
+                    #print(blob.sentences[0], polarity, "\n")
+                    if((tmpScore < 0 and polarity < 0) or (tmpScore > 0 and polarity >= 0)):
                         score += tmpScore
                         #print(tmpScore, "\n")
                     else:
                         if(polarity < 0):
-                            score += math.fabs(polarity)
+                            if(strength == "strong"):
+                                score += .35
+                            else:
+                                score += .25
+                            
+                            #################
+                            #try numbers from 0-1 intervals of .1 for each (score +=) line
+                            #or maybe a multiplier based on polarity itself
+                            #################
+
                             #print(math.fabs(polarity), "\n")
                         else:
-                            score += polarity * -1
+                            if(strength == "strong"):
+                                score += -.35
+                            else:
+                                score += -.25
+                            
                             #print(polarity * -1, "\n")
-                    curri = i
+                    curri = i    ####maybe subtract a number from i like 1->4
+                else:
+                    score += tmpScore
 
-
-
-        """
-        for word in Words:
-            if word in sentimentDictionary:
-               score+=sentimentDictionary[word]
-
-        
-        #debug
-        if(score < 0 and sentiment == "positive"):
-            continue
-            #blob = TextBlob(sentence)
-            #for sentences in blob.sentences:
-                #print(sentences.sentiment.polarity)
-                #score=score*sentences.sentiment.polarity
-            #print(score, sentiment)
-            #print(sentence, "\n \n")
-        
-        if(score >= 0 and sentiment == "negative"):
-            continue
-            #print(score, sentiment)
-            #blob = TextBlob(sentence)
-            #print(blob, blob.sentiment.polarity, "\n")
-            #for sentences in blob.sentences:
-                #print(sentences.sentiment.polarity)
-                #score=score*sentences.sentiment.polarity 
-            #print(sentence, "\n \n")
-        #
-        """
 
         #print(score)
  
