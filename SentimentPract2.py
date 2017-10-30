@@ -2,7 +2,9 @@
 import re, random, math, collections, itertools
 from textblob import TextBlob
 import nltk
-#nltk.download('punkt')
+nltk.download('twython')
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
 
 PRINT_ERRORS=0
 
@@ -272,12 +274,12 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
 
         Words = re.findall(r"[\w']+", sentence)
         score=0
-
-        
+  
         Lword = Words
         curri = 0
         for i in range(0, len(Lword)):  #for each word          
             blob = ""
+            nltkBlob = ""
             if(Lword[i] in sentimentDictionary):  #if in the dictionary
                 tmpScore = sentimentDictionary[Lword[i]]  #get its score
                 if(curri != i):
@@ -289,6 +291,24 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                     curri = i
                 else:
                     score += tmpScore
+            elif(TextBlob(Lword[i]).sentiment.polarity < 0 or TextBlob(Lword[i]).sentiment.polarity > 0):
+                score += TextBlob(Lword[i]).sentiment.polarity
+        
+
+        sia = SentimentIntensityAnalyzer()
+        pd = sia.polarity_scores(sentence)
+        polNeg = pd["neg"]
+        polPos = pd["pos"] 
+
+
+        if(score > threshold and (score < threshold + .9)):  #if predicting positive .1->1
+            if(polNeg > (polPos + .20)):
+                score = -1
+        
+        elif(score < threshold and (score > threshold - .9)):  #if predicting negative .1->-.8
+            if(polPos > (polNeg + .20)):
+                score = 1
+        
 
 
         #print(score)
@@ -301,6 +321,7 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                 correctpos+=1
                 totalpospred+=1
             else:
+                #print("Positive: ", polPos, polNeg)
                 correct+=0
                 totalnegpred+=1
         else:
@@ -310,6 +331,7 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                 correctneg+=1
                 totalnegpred+=1
             else:
+                #print("Negative: ", polPos, polNeg)
                 correct+=0
                 totalpospred+=1
         
