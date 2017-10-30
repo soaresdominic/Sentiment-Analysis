@@ -37,15 +37,13 @@ def readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia):
     #exit()
 
     for word, value in posWordList.items():
-        if("weak" in value):
-            sentimentDictionary[word] = .75
-        else:
-            sentimentDictionary[word] = 1
+        b = TextBlob(word)
+        sentimentDictionary[word] = (1 + b.sentiment.polarity) / 2.0
+
     for word, value in negWordList.items():
-        if("weak" in value):
-            sentimentDictionary[word] = -.75
-        else:
-            sentimentDictionary[word] = -1
+        b = TextBlob(word)
+        sentimentDictionary[word] = (-1 + b.sentiment.polarity) / 2.0
+
 
     #print(sentimentDictionary)
 
@@ -278,46 +276,19 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
         
         Lword = Words
         curri = 0
-        dupDict = {}
         for i in range(0, len(Lword)):  #for each word          
-            strength = ""
             blob = ""
             if(Lword[i] in sentimentDictionary):  #if in the dictionary
-                if(Lword[i] in dupDict):
-                    dupDict[Lword[i]] += 1
-                else:
-                    dupDict[Lword[i]] = 1
-
                 tmpScore = sentimentDictionary[Lword[i]]  #get its score
-                if(tmpScore == .75 or tmpScore == -.75):
-                    strength = "weak"
-                else:
-                    strength = "strong"
-                if(curri != i): 
+                if(curri != i):
                     blob = str(Lword[curri:i+1])
                     blob = TextBlob(blob)
                     polarity = blob.sentiment.polarity
                     if((tmpScore < 0 and polarity < 0) or (tmpScore > 0 and polarity >= 0)):
                         score += tmpScore
-                    else:
-                        subject = blob.sentiment.subjectivity
-                        if(polarity < 0):
-                            if(strength == "strong"):
-                                score += 1 * subject
-                            else:
-                                score += .5 * subject
-                        else:
-                            if(strength == "strong"):
-                                score += -1 * subject
-                            else:
-                                score += -.5 * subject
                     curri = i
                 else:
                     score += tmpScore
-        
-        for key,value in dupDict.items():
-            if(value > 1):
-                score += sentimentDictionary[key] * value * .5
 
 
         #print(score)
@@ -424,14 +395,17 @@ pWord={}    # p(W)
 
 #run sentiment dictionary based classifier on datasets
 print("Rule Based")
+
 """
-for i in range(-4,4):
+i=-0
+for f in range(0,20):
     print(i)
     testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, i)
     testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, i)
     testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, i)
-"""
+    i+=0.10
 
+"""
 testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, .1)
 testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, .1)
 testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, .1)
