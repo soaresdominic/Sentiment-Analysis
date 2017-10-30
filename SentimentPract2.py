@@ -267,6 +267,7 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
 
     #print(len(sentencesTest.items()))
 
+    a = 0
     for sentence, sentiment in sentencesTest.items():
 
         #print(sentiment, sentence, '\n')
@@ -277,10 +278,16 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
         
         Lword = Words
         curri = 0
-        for i in range(0, len(Lword)):  #for each word
+        dupDict = {}
+        for i in range(0, len(Lword)):  #for each word          
             strength = ""
             blob = ""
             if(Lword[i] in sentimentDictionary):  #if in the dictionary
+                if(Lword[i] in dupDict):
+                    dupDict[Lword[i]] += 1
+                else:
+                    dupDict[Lword[i]] = 1
+
                 tmpScore = sentimentDictionary[Lword[i]]  #get its score
                 if(tmpScore == .75 or tmpScore == -.75):
                     strength = "weak"
@@ -288,36 +295,29 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                     strength = "strong"
                 if(curri != i): 
                     blob = str(Lword[curri:i+1])
-                    #print(blob)
                     blob = TextBlob(blob)
                     polarity = blob.sentiment.polarity
-                    #print(blob.sentences[0], polarity, "\n")
                     if((tmpScore < 0 and polarity < 0) or (tmpScore > 0 and polarity >= 0)):
                         score += tmpScore
-                        #print(tmpScore, "\n")
                     else:
+                        subject = blob.sentiment.subjectivity
                         if(polarity < 0):
                             if(strength == "strong"):
-                                score += .35
+                                score += 1 * subject
                             else:
-                                score += .25
-                            
-                            #################
-                            #try numbers from 0-1 intervals of .1 for each (score +=) line
-                            #or maybe a multiplier based on polarity itself
-                            #################
-
-                            #print(math.fabs(polarity), "\n")
+                                score += .5 * subject
                         else:
                             if(strength == "strong"):
-                                score += -.35
+                                score += -1 * subject
                             else:
-                                score += -.25
-                            
-                            #print(polarity * -1, "\n")
-                    curri = i    ####maybe subtract a number from i like 1->4
+                                score += -.5 * subject
+                    curri = i
                 else:
                     score += tmpScore
+        
+        for key,value in dupDict.items():
+            if(value > 1):
+                score += sentimentDictionary[key] * value * .5
 
 
         #print(score)
@@ -432,9 +432,9 @@ for i in range(-4,4):
     testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, i)
 """
 
-testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, 0)
-testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, 0)
-testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, 0)
+testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, .1)
+testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, .1)
+testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, .1)
 
 
 # print most useful words
