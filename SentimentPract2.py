@@ -22,16 +22,30 @@ def readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia):
     negSentencesNokia = open('nokia-neg.txt', 'r', encoding="ISO-8859-1")
     negSentencesNokia = re.split(r'\n', negSentencesNokia.read())
  
-    posDictionary = open('positive-words.txt', 'r', encoding="ISO-8859-1")
-    posWordList = re.findall(r"[a-z\-]+", posDictionary.read())
+    #posDictionary = open('positive-words.txt', 'r', encoding="ISO-8859-1")
+    #posWordList = re.findall(r"[a-z\-]+", posDictionary.read())
 
-    negDictionary = open('negative-words.txt', 'r', encoding="ISO-8859-1")
-    negWordList = re.findall(r"[a-z\-]+", negDictionary.read())
+    #negDictionary = open('negative-words.txt', 'r', encoding="ISO-8859-1")
+    #negWordList = re.findall(r"[a-z\-]+", negDictionary.read())
 
-    for i in posWordList:
-        sentimentDictionary[i] = 1
-    for i in negWordList:
-        sentimentDictionary[i] = -1
+    dictionaryFilename = "subjclueslen1-HLTEMNLP05.tff"
+    posWordList, negWordList = findWords(dictionaryFilename)
+
+    #print(posWordList)
+    #exit()
+
+    for word, value in posWordList.items():
+        if("weak" in value):
+            sentimentDictionary[word] = .75
+        else:
+            sentimentDictionary[word] = 1
+    for word, value in negWordList.items():
+        if("weak" in value):
+            sentimentDictionary[word] = -.75
+        else:
+            sentimentDictionary[word] = -1
+
+    #print(sentimentDictionary)
 
     #create Training and Test Datsets:
     #We want to test on sentences we haven't trained on, to see how well the model generalses to previously unseen sentences
@@ -54,6 +68,20 @@ def readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia):
             sentencesNokia[i]="positive"
     for i in negSentencesNokia:
             sentencesNokia[i]="negative"
+
+
+def findWords(dictionaryFilename):
+    posWordList = {}
+    negWordList = {}
+    with open(dictionaryFilename, 'r') as d:
+        for line in d:
+            line = line.split(' ')  #line is a list of each attribute of the word
+            if("positive" in line[5]):
+                posWordList[line[2].split('=')[1]] = line[0].split('=')[1]  #add to dictionary, key=word value=strong/weak
+            else:
+                negWordList[line[2].split('=')[1]] = line[0].split('=')[1]  #add to dictionary, key=word value=strong/weak
+    return posWordList, negWordList
+
 
 #----------------------------End of data initialisation ----------------#
 
@@ -235,7 +263,7 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
     correctpos=0
     correctneg=0
 
-    #print(sentencesTest.items())
+    #print(len(sentencesTest.items()))
 
     for sentence, sentiment in sentencesTest.items():
 
@@ -243,9 +271,20 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
 
         Words = re.findall(r"[\w']+", sentence)
         score=0
+
         for word in Words:
             if word in sentimentDictionary:
                score+=sentimentDictionary[word]
+
+        #debug
+        if(score < 0 and sentiment == "positive"):
+            print(score, sentiment)
+            print(sentence, "\n \n")
+        
+        if(score >= 0 and sentiment == "negative"):
+            print(score, sentiment)
+            print(sentence, "\n \n")
+        #
  
         total+=1
         if sentiment=="positive":
@@ -266,17 +305,28 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
             else:
                 correct+=0
                 totalpospred+=1
+        
+
  
     acc=correct/float(total)
     print (dataName + " Accuracy (All)=%0.2f" % acc + " (%d" % correct + "/%d" % total + ")\n")
     precision_pos=correctpos/float(totalpospred)
     recall_pos=correctpos/float(totalpos)
-    precision_neg=correctneg/float(totalnegpred)
+    
+    if(totalnegpred == 0):
+        precision_neg = 0
+    else:
+        precision_neg=correctneg/float(totalnegpred)
+
     recall_neg=correctneg/float(totalneg)
-    f_pos=2*precision_pos*recall_pos/(precision_pos+recall_pos);
-    f_neg=2*precision_neg*recall_neg/(precision_neg+recall_neg);
+    f_pos=2*precision_pos*recall_pos/(precision_pos+recall_pos)
 
+    if(precision_neg+recall_neg == 0):
+        f_neg = 0
+    else:
+        f_neg=2*precision_neg*recall_neg/(precision_neg+recall_neg)
 
+    
     print (dataName + " Precision (Pos)=%0.2f" % precision_pos + " (%d" % correctpos + "/%d" % totalpospred + ")")
     print (dataName + " Recall (Pos)=%0.2f" % recall_pos + " (%d" % correctpos + "/%d" % totalpos + ")")
     print (dataName + " F-measure (Pos)=%0.2f" % f_pos)
@@ -284,7 +334,7 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
     print (dataName + " Precision (Neg)=%0.2f" % precision_neg + " (%d" % correctneg + "/%d" % totalnegpred + ")")
     print (dataName + " Recall (Neg)=%0.2f" % recall_neg + " (%d" % correctneg + "/%d" % totalneg + ")")
     print (dataName + " F-measure (Neg)=%0.2f" % f_neg + "\n")
-
+    
 
 
 
@@ -326,7 +376,7 @@ pWordNeg={} # p(W|Negative)
 pWord={}    # p(W) 
 
 #build conditional probabilities using training data
-trainBayes(sentencesTrain, pWordPos, pWordNeg, pWord)
+#trainBayes(sentencesTrain, pWordPos, pWordNeg, pWord)
 
 #run naive bayes classifier on datasets
 #print ("Naive Bayes")
@@ -338,9 +388,17 @@ trainBayes(sentencesTrain, pWordPos, pWordNeg, pWord)
 
 #run sentiment dictionary based classifier on datasets
 print("Rule Based")
-testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, -4)
-testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, -4)
-testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, -3)
+"""
+for i in range(-4,4):
+    print(i)
+    testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, i)
+    testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, i)
+    testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, i)
+"""
+
+testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, -1)
+testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, -1)
+testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, -1)
 
 
 # print most useful words
