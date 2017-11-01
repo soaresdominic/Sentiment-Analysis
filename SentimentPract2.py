@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import re, random, math, collections, itertools
 from textblob import TextBlob
+import nltk
+nltk.download('punkt')
 
 PRINT_ERRORS=0
 
@@ -278,12 +280,23 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
 
         #debug
         if(score < 0 and sentiment == "positive"):
-            print(score, sentiment)
-            print(sentence, "\n \n")
+            continue
+            #blob = TextBlob(sentence)
+            #for sentences in blob.sentences:
+                #print(sentences.sentiment.polarity)
+                #score=score*sentences.sentiment.polarity
+            #print(score, sentiment)
+            #print(sentence, "\n \n")
         
         if(score >= 0 and sentiment == "negative"):
-            print(score, sentiment)
-            print(sentence, "\n \n")
+            #continue
+            #print(score, sentiment)
+            blob = TextBlob(sentence)
+            print(blob, blob.sentiment.polarity, "\n")
+            #for sentences in blob.sentences:
+                #print(sentences.sentiment.polarity)
+                #score=score*sentences.sentiment.polarity
+            #print(sentence, "\n \n")
         #
  
         total+=1
