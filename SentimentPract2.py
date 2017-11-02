@@ -2,7 +2,7 @@
 import re, random, math, collections, itertools
 from textblob import TextBlob
 import nltk
-nltk.download('punkt')
+#nltk.download('punkt')
 
 PRINT_ERRORS=0
 
@@ -274,10 +274,37 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
         Words = re.findall(r"[\w']+", sentence)
         score=0
 
+        Lword = Words
+        curri = 0
+        for i in range(0, len(Lword)):
+            blob = []
+            if(Lword[i] in sentimentDictionary):
+                tmpScore = sentimentDictionary[Lword[i]]
+                if(curri != i):
+                    blob = str(Lword[curri:i+1])
+                    #print(blob)
+                    blob = TextBlob(blob)
+                    polarity = blob.sentiment.polarity
+                    if((tmpScore < 0 and polarity < 0) or (tmpScore > 0 and polarity > 0)):
+                        score += tmpScore
+                        #print(tmpScore, "\n")
+                    else:
+                        if(polarity < 0):
+                            score += math.fabs(polarity)
+                            #print(math.fabs(polarity), "\n")
+                        else:
+                            score += polarity * -1
+                            #print(polarity * -1, "\n")
+                    curri = i
+
+
+
+        """
         for word in Words:
             if word in sentimentDictionary:
                score+=sentimentDictionary[word]
 
+        
         #debug
         if(score < 0 and sentiment == "positive"):
             continue
@@ -289,15 +316,18 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
             #print(sentence, "\n \n")
         
         if(score >= 0 and sentiment == "negative"):
-            #continue
+            continue
             #print(score, sentiment)
-            blob = TextBlob(sentence)
-            print(blob, blob.sentiment.polarity, "\n")
+            #blob = TextBlob(sentence)
+            #print(blob, blob.sentiment.polarity, "\n")
             #for sentences in blob.sentences:
                 #print(sentences.sentiment.polarity)
-                #score=score*sentences.sentiment.polarity
+                #score=score*sentences.sentiment.polarity 
             #print(sentence, "\n \n")
         #
+        """
+
+        #print(score)
  
         total+=1
         if sentiment=="positive":
@@ -409,9 +439,9 @@ for i in range(-4,4):
     testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, i)
 """
 
-testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, -1)
-testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, -1)
-testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, -1)
+testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, 0)
+testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, 0)
+testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, 0)
 
 
 # print most useful words
