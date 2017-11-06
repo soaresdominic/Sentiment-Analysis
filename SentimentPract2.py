@@ -4,6 +4,8 @@ from textblob import TextBlob
 import nltk
 nltk.download('twython')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+nltk.download('vader_lexicon')
+from datetime import datetime
 
 
 PRINT_ERRORS=0
@@ -390,7 +392,7 @@ def mostUseful(pWordPos, pWordNeg, pWord, n):
 
 
 #---------- Main Script --------------------------
-
+tstart=datetime.now()
 
 sentimentDictionary={} # {} initialises a dictionary [hash function]
 sentencesTrain={}
@@ -436,6 +438,9 @@ testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDic
 # print most useful words
 #print("Most Useful")
 #mostUseful(pWordPos, pWordNeg, pWord, 100)
+
+tend=datetime.now()
+print('TIME -',tend-tstart)
 
 
 
