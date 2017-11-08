@@ -1,12 +1,24 @@
-#!/usr/bin/env python
+"""
+Machine Learning - Sentiment Analysis
+Authors: Dominic Soares, Jimmy Joseph
+Usage:  1. Install python3, pip3
+        2. Install textblob and nltk using - "pip3 install textblob"
+        3. To run naive bayes classifier - comment out lines 423-426
+          To run updated rule based classifier - comment out lines 416-419
+        4. Run - "python3 SentimentPract2.py"
+
+Notes:
+- to cut runtime down 80% with a 2-4% accuracy decrease, comment out lines 306-317
+  (the senticnet sentiment analyzer)
+"""
+
+
 import re, random, math, collections, itertools
 from textblob import TextBlob
 import nltk
-nltk.download('twython')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 nltk.download('vader_lexicon')
 from datetime import datetime
-
 
 PRINT_ERRORS=0
 
@@ -28,23 +40,17 @@ def readFiles(sentimentDictionary,sentencesTrain,sentencesTest,sentencesNokia):
     negSentencesNokia = open('nokia-neg.txt', 'r', encoding="ISO-8859-1")
     negSentencesNokia = re.split(r'\n', negSentencesNokia.read())
  
-    #posDictionary = open('positive-words.txt', 'r', encoding="ISO-8859-1")
-    #posWordList = re.findall(r"[a-z\-]+", posDictionary.read())
+    posDictionary = open('positive-words.txt', 'r', encoding="ISO-8859-1")
+    posWordList = re.findall(r"[a-z\-]+", posDictionary.read())
 
-    #negDictionary = open('negative-words.txt', 'r', encoding="ISO-8859-1")
-    #negWordList = re.findall(r"[a-z\-]+", negDictionary.read())
+    negDictionary = open('negative-words.txt', 'r', encoding="ISO-8859-1")
+    negWordList = re.findall(r"[a-z\-]+", negDictionary.read())
 
-    dictionaryFilename = "subjclueslen1-HLTEMNLP05.tff"
-    posWordList, negWordList = findWords(dictionaryFilename)
-
-    #print(posWordList)
-    #exit()
-
-    for word, value in posWordList.items():
+    for word in posWordList:
         b = TextBlob(word)
         sentimentDictionary[word] = (1 + b.sentiment.polarity) / 2.0
 
-    for word, value in negWordList.items():
+    for word in negWordList:
         b = TextBlob(word)
         sentimentDictionary[word] = (-1 + b.sentiment.polarity) / 2.0
 
@@ -267,13 +273,8 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
     correctpos=0
     correctneg=0
 
-    #print(len(sentencesTest.items()))
-
     a = 0
     for sentence, sentiment in sentencesTest.items():
-
-        #print(sentiment, sentence, '\n')
-
         Words = re.findall(r"[\w']+", sentence)
         score=0
   
@@ -296,13 +297,12 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
             elif(TextBlob(Lword[i]).sentiment.polarity < 0 or TextBlob(Lword[i]).sentiment.polarity > 0):
                 score += TextBlob(Lword[i]).sentiment.polarity
         
-
+        
         sia = SentimentIntensityAnalyzer()
         pd = sia.polarity_scores(sentence)
         polNeg = pd["neg"]
         polPos = pd["pos"] 
-
-
+        
         if(score > threshold and (score < threshold + .9)):  #if predicting positive .1->1
             if(polNeg > (polPos + .20)):
                 score = -1
@@ -311,9 +311,6 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
             if(polPos > (polNeg + .20)):
                 score = 1
         
-
-
-        #print(score)
  
         total+=1
         if sentiment=="positive":
@@ -323,7 +320,6 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                 correctpos+=1
                 totalpospred+=1
             else:
-                #print("Positive: ", polPos, polNeg)
                 correct+=0
                 totalnegpred+=1
         else:
@@ -333,7 +329,6 @@ def testDictionary(sentencesTest, dataName, sentimentDictionary, threshold):
                 correctneg+=1
                 totalnegpred+=1
             else:
-                #print("Negative: ", polPos, polNeg)
                 correct+=0
                 totalpospred+=1
         
@@ -419,28 +414,14 @@ pWord={}    # p(W)
 
 #run sentiment dictionary based classifier on datasets
 print("Rule Based")
-
-"""
-i=-0
-for f in range(0,20):
-    print(i)
-    testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, i)
-    testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, i)
-    testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, i)
-    i+=0.10
-
-"""
 testDictionary(sentencesTrain,  "Films (Train Data, Rule-Based)\t", sentimentDictionary, .1)
 testDictionary(sentencesTest,  "Films  (Test Data, Rule-Based)\t",  sentimentDictionary, .1)
 testDictionary(sentencesNokia, "Nokia   (All Data, Rule-Based)\t",  sentimentDictionary, .1)
 
 
-# print most useful words
+#print the most useful words
 #print("Most Useful")
 #mostUseful(pWordPos, pWordNeg, pWord, 100)
 
 tend=datetime.now()
 print('TIME -',tend-tstart)
-
-
-
